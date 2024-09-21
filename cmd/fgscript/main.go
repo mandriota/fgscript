@@ -59,6 +59,8 @@ func main() {
 			err = gen.WriteLnStDeclaration(tokens)
 		case "set":
 			err = gen.WriteLnStAssignment(tokens)
+		case "call":
+			err = gen.WriteLnStCall(tokens)
 		case "print":
 			err = gen.WriteLnStPrint(tokens, false)
 		case "println":

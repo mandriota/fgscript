@@ -274,6 +274,18 @@ func (g *Generator) WriteLnStAssignment(tokens []string) error {
 	return nil
 }
 
+func (g *Generator) WriteLnStCall(tokens []string) error {
+	if len(tokens) < 2 {
+		return fmt.Errorf("expected at least 2 words")
+	}
+
+	g.sb.WriteString(fmt.Sprintf(
+		"<call expression=\"%s\"/>",
+		strings.Join(tokens[1:], " "),
+	))
+	return nil
+}
+
 func (g *Generator) WriteLnStPrint(tokens []string, newline bool) error {
 	if len(tokens) < 2 {
 		return fmt.Errorf("expected at least 2 words")
