@@ -12,10 +12,10 @@ func Tokenize(src string) []string {
 	inQuotes := false
 	inParens := false
 
-	for _, c := range src {
-		switch c {
+	for _, r := range src {
+		switch r {
 		case '"':
-			currentToken.WriteRune(c)
+			currentToken.WriteRune(r)
 
 			if inQuotes {
 				tokens = append(tokens, currentToken.String())
@@ -27,28 +27,28 @@ func Tokenize(src string) []string {
 		case '(':
 			if !inQuotes {
 				inParens = true
-				currentToken.WriteRune(c)
+				currentToken.WriteRune(r)
 			} else {
-				currentToken.WriteRune(c)
+				currentToken.WriteRune(r)
 			}
 		case ')':
 			if inParens && !inQuotes {
-				currentToken.WriteRune(c)
+				currentToken.WriteRune(r)
 				tokens = append(tokens, currentToken.String())
 				currentToken.Reset()
 				inParens = false
 			} else {
-				currentToken.WriteRune(c)
+				currentToken.WriteRune(r)
 			}
 		case ' ', '\t':
 			if inQuotes || inParens {
-				currentToken.WriteRune(c)
+				currentToken.WriteRune(r)
 			} else if currentToken.Len() > 0 {
 				tokens = append(tokens, currentToken.String())
 				currentToken.Reset()
 			}
 		default:
-			currentToken.WriteRune(c)
+			currentToken.WriteRune(r)
 		}
 	}
 
