@@ -30,3 +30,8 @@ fn Fibonacci (n Integer) x Integer
   end
 end
 ```
+
+# Installation
+```sh
+go install github.com/mandriota/fgscript/cmd/fgscript@latest
+```
