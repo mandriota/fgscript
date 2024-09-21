@@ -1,4 +1,4 @@
-# Fgscript
+# FGScript
 A macro system for Flowgorithm internal file format.
 
 ```ruby
