@@ -2,10 +2,10 @@
 A macro system for Flowgorithm internal file format.
 
 ```ruby
+# Comments outside of the function are ignored
+# (They will not appear in the generated file)
 fn Main () _ None
   # Comments are allowed only at the beggining of the line
-  # You cannot use comments outside of function
-	
   var n Integer
 
   println "Write a number:"

@@ -2,6 +2,7 @@ package fgscript
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 )
 
@@ -68,6 +69,10 @@ func (g *Generator) String() string {
 	return g.sb.String()
 }
 
+func (g *Generator) TopLevel() bool {
+	return len(g.stStack) == 0
+}
+
 func (g *Generator) WriteHeader() {
 	g.sb.WriteString("<?xml version=\"1.0\"?><flowgorithm fileversion=\"4.2\">")
 }
@@ -81,9 +86,48 @@ func (g *Generator) WriteFooter() error {
 	return nil
 }
 
+func (g *Generator) MatchAndWrite(tokens []string) error {
+	if g.TopLevel() && !slices.Contains([]string{"fn", "#"}, tokens[0]) {
+		return fmt.Errorf("statement \"%s\" is not allowed outside of function\n", tokens[0])
+	}
+	
+	switch tokens[0] {
+	case "fn":
+		return g.WriteStFunction(tokens)
+	case "if":
+		return g.WriteStIf(tokens)
+	case "else":
+		return g.WriteStElse(tokens)
+	case "while":
+		return g.WriteStWhile(tokens)
+	case "do":
+		return g.WriteStDo(tokens)
+	case "for":
+		return g.WriteStFor(tokens)
+	case "end":
+		return g.WriteEndSt(tokens)
+	case "var":
+		return g.WriteLnStDeclaration(tokens)
+	case "set":
+		return g.WriteLnStAssignment(tokens)
+	case "call":
+		return g.WriteLnStCall(tokens)
+	case "print":
+		return g.WriteLnStPrint(tokens, false)
+	case "println":
+		return g.WriteLnStPrint(tokens, true)
+	case "scan":
+		return g.WriteLnStScan(tokens)
+	case "#":
+		return g.WriteComment(tokens)
+	default:
+		return fmt.Errorf("unknown command \"%s\"", tokens[0])
+	}
+}
+
 func (g *Generator) WriteStFunction(tokens []string) error {
 	if len(tokens) != 5 {
-		return fmt.Errorf("expected 5 words (found %d)", len(tokens))
+		return fmt.Errorf("\"%s\" expects 4 arguments (found %d)", tokens[0], len(tokens)-1)
 	}
 
 	fnName := tokens[1]
@@ -91,14 +135,23 @@ func (g *Generator) WriteStFunction(tokens []string) error {
 	retVarName := tokens[3]
 	retVarType := tokens[4]
 
+	if len(g.stStack) != 0 {
+		return fmt.Errorf("function \"%s\" is nestedly declared", fnName)
+	}
+
 	if retVarName == "_" {
 		retVarName = ""
 	}
 
-	g.sb.WriteString(fmt.Sprintf("<function name=\"%s\" type=\"%s\" variable=\"%s\">", fnName, retVarType, retVarName))
+	g.sb.WriteString(fmt.Sprintf(
+		"<function name=\"%s\" type=\"%s\" variable=\"%s\">",
+		fnName,
+		retVarType,
+		retVarName,
+	))
 
 	if len(fnArgs) < 2 || fnArgs[0] != '(' || fnArgs[len(fnArgs)-1] != ')' {
-		return fmt.Errorf("wrong arguments format for function \"%s\"", fnName)
+		return fmt.Errorf("function \"%s\" has wrong arguments format", fnName)
 	}
 
 	g.stStack = append(g.stStack, "</body></function>")
@@ -111,7 +164,7 @@ func (g *Generator) WriteStFunction(tokens []string) error {
 	}
 
 	if len(fnArgsTokens)%2 != 0 {
-		return fmt.Errorf("wrong arguments format for function \"%s\"", fnName)
+		return fmt.Errorf("function \"%s\" has wrong arguments format", fnName)
 	}
 
 	g.sb.WriteString("<parameters>")
@@ -130,7 +183,7 @@ func (g *Generator) WriteStFunction(tokens []string) error {
 
 func (g *Generator) WriteStIf(tokens []string) error {
 	if len(tokens) < 2 {
-		return fmt.Errorf("wrong if statement format: expected expression")
+		return fmt.Errorf("\"%s\" expects expression", tokens[0])
 	}
 
 	g.sb.WriteString(fmt.Sprintf("<if expression=\"%s\"><then>", strings.Join(tokens[1:], " ")))
@@ -139,8 +192,8 @@ func (g *Generator) WriteStIf(tokens []string) error {
 }
 
 func (g *Generator) WriteStElse(tokens []string) error {
-	if len(g.stStack) == 0 || !strings.HasPrefix(g.stStack[len(g.stStack)-1], "</then><else/></if>") {
-		return fmt.Errorf("else block found but if block not found")
+	if !strings.HasPrefix(g.stStack[len(g.stStack)-1], "</then><else/></if>") {
+		return fmt.Errorf("\"%s\" must be preceded by an if", tokens[0])
 	}
 
 	if len(tokens) > 1 && tokens[1] != "if" {
@@ -154,14 +207,15 @@ func (g *Generator) WriteStElse(tokens []string) error {
 		g.stStack = g.stStack[:len(g.stStack)-1]
 		g.stStack[len(g.stStack)-1] += "</else></if>"
 	} else {
-		g.stStack[len(g.stStack)-1] = "</else></if>" + strings.TrimPrefix(g.stStack[len(g.stStack)-1], "</then><else/></if>")
+		g.stStack[len(g.stStack)-1] = "</else></if>" +
+			strings.TrimPrefix(g.stStack[len(g.stStack)-1], "</then><else/></if>")
 	}
 	return nil
 }
 
 func (g *Generator) WriteStWhile(tokens []string) error {
 	if len(tokens) < 2 {
-		return fmt.Errorf("wrong while statement format: expected expression")
+		return fmt.Errorf("\"%s\" expects expression", tokens[0])
 	}
 
 	g.sb.WriteString(fmt.Sprintf("<while expression=\"%s\">", strings.Join(tokens[1:], " ")))
@@ -171,7 +225,7 @@ func (g *Generator) WriteStWhile(tokens []string) error {
 
 func (g *Generator) WriteStDo(tokens []string) error {
 	if len(tokens) < 2 {
-		return fmt.Errorf("wrong do statement format: expected expression")
+		return fmt.Errorf("\"%s\" expects expression", tokens[0])
 	}
 
 	g.sb.WriteString(fmt.Sprintf("<do expression=\"%s\">", strings.Join(tokens[1:], " ")))
@@ -181,7 +235,7 @@ func (g *Generator) WriteStDo(tokens []string) error {
 
 func (g *Generator) WriteStFor(tokens []string) error {
 	if len(tokens) < 8 {
-		return fmt.Errorf("wrong do statement format: expected expression")
+		return fmt.Errorf("\"%s\" expects expression", tokens[0])
 	}
 
 	tokenPos := 1
@@ -196,7 +250,7 @@ func (g *Generator) WriteStFor(tokens []string) error {
 	tokenPos++
 
 	if tokens[tokenPos] != "from" {
-		return fmt.Errorf("wrong for statement format: expected expression from")
+		return fmt.Errorf("\"%s\" expects expression \"from\"", tokens[0])
 	}
 	tokenPos++
 
@@ -207,7 +261,7 @@ func (g *Generator) WriteStFor(tokens []string) error {
 	fromExprEndPos := tokenPos
 
 	if tokenPos >= len(tokens)-1 || tokens[tokenPos] != "to" {
-		return fmt.Errorf("wrong for statement format: expected expression to")
+		return fmt.Errorf("\"%s\" expects expression \"to\"", tokens[0])
 	}
 
 	toExprBegPos := tokenPos + 1
@@ -217,7 +271,7 @@ func (g *Generator) WriteStFor(tokens []string) error {
 	toExprEndPos := tokenPos
 
 	if tokenPos >= len(tokens)-1 || tokens[tokenPos] != "step" {
-		return fmt.Errorf("wrong for statement format: expected expression step")
+		return fmt.Errorf("\"%s\" expects expression \"step\"", tokens[0])
 	}
 
 	stepExprBegPos := tokenPos + 1
@@ -235,12 +289,8 @@ func (g *Generator) WriteStFor(tokens []string) error {
 }
 
 func (g *Generator) WriteEndSt(tokens []string) error {
-	if len(g.stStack) == 0 {
-		return fmt.Errorf("unexpected end of statement")
-	}
-
 	if len(tokens) > 1 {
-		return fmt.Errorf("expected 0 arguments (found %d)", len(tokens)-1)
+		return fmt.Errorf("\"%s\" expects 0 arguments (found %d)", tokens[0], len(tokens)-1)
 	}
 
 	g.sb.WriteString(g.stStack[len(g.stStack)-1])
@@ -250,7 +300,7 @@ func (g *Generator) WriteEndSt(tokens []string) error {
 
 func (g *Generator) WriteLnStDeclaration(tokens []string) error {
 	if len(tokens) < 3 {
-		return fmt.Errorf("expected at least 3 words (found %d)", len(tokens))
+		return fmt.Errorf("\"%s\" expects at least 2 arguments (found %d)", tokens[0], len(tokens)-1)
 	}
 
 	g.sb.WriteString(fmt.Sprintf(
@@ -263,7 +313,7 @@ func (g *Generator) WriteLnStDeclaration(tokens []string) error {
 
 func (g *Generator) WriteLnStAssignment(tokens []string) error {
 	if len(tokens) < 3 {
-		return fmt.Errorf("expected at least 3 words")
+		return fmt.Errorf("\"%s\" expects at least 2 arguments (found %d)", tokens[0], len(tokens)-1)
 	}
 
 	g.sb.WriteString(fmt.Sprintf(
@@ -276,7 +326,7 @@ func (g *Generator) WriteLnStAssignment(tokens []string) error {
 
 func (g *Generator) WriteLnStCall(tokens []string) error {
 	if len(tokens) < 2 {
-		return fmt.Errorf("expected at least 2 words")
+		return fmt.Errorf("\"%s\" expects at least 1 argument (found %d)", tokens[0], len(tokens)-1)
 	}
 
 	g.sb.WriteString(fmt.Sprintf(
@@ -288,23 +338,25 @@ func (g *Generator) WriteLnStCall(tokens []string) error {
 
 func (g *Generator) WriteLnStPrint(tokens []string, newline bool) error {
 	if len(tokens) < 2 {
-		return fmt.Errorf("expected at least 2 words")
+		return fmt.Errorf("\"%s\" expects at least 1 argument (found %d)", tokens[0], len(tokens)-1)
+	}
+
+	newlineStringify := "False"
+	if newline {
+		newlineStringify = "True"
 	}
 
 	g.sb.WriteString(fmt.Sprintf(
 		"<output expression=\"%s\" newline=\"%s\"/>",
 		strings.ReplaceAll(strings.Join(tokens[1:], " &amp; "), "\"", "&quot;"),
-		map[bool]string{
-			true:  "True",
-			false: "False",
-		}[newline],
+		newlineStringify,
 	))
 	return nil
 }
 
 func (g *Generator) WriteLnStScan(tokens []string) error {
 	if len(tokens) < 2 {
-		return fmt.Errorf("expected at least 2 words")
+		return fmt.Errorf("\"%s\" expects at least 1 argument (found %d)", tokens[0], len(tokens)-1)
 	}
 
 	g.sb.WriteString(fmt.Sprintf("<input variable=\"%s\"/>", tokens[1]))
@@ -313,7 +365,11 @@ func (g *Generator) WriteLnStScan(tokens []string) error {
 
 func (g *Generator) WriteComment(tokens []string) error {
 	if len(tokens) < 2 {
-		return fmt.Errorf("expected at least 2 words")
+		return fmt.Errorf("\"%s\" expects at least 1 argument (found %d)", tokens[0], len(tokens)-1)
+	}
+
+	if len(g.stStack) == 0 {
+		return nil
 	}
 
 	g.sb.WriteString(fmt.Sprintf(
