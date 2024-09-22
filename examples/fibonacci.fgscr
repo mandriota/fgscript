@@ -1,3 +1,5 @@
+# Comments outside of the function are ignored
+# (They will not appear in the generated file)
 fn Main () _ None
   # Comments are allowed only at the beggining of the line
 	var n []Integer
