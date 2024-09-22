@@ -35,3 +35,11 @@ end
 ```sh
 go install github.com/mandriota/fgscript/cmd/fgscript@latest
 ```
+
+# Editors configuration
+## Emacs & Straight
+```elisp
+(use-package fgscript-mode
+  :straight (:type git :host github :repo "mandriota/fgscript"
+                   :files ("editors/emacs/fgscript-mode.el")))
+```
