@@ -2,7 +2,7 @@
 # (They will not appear in the generated file)
 fn Main () _ None
   # Comments are allowed only at the beggining of the line
-	var n []Integer
+	var n Integer
 	
 	println "Write a number:"
   scan n
