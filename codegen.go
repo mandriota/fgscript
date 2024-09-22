@@ -106,7 +106,7 @@ func (g *Generator) MatchAndWrite(tokens []string) error {
 	if g.TopLevel() && !slices.Contains([]string{"fn", "#"}, tokens[0]) {
 		return fmt.Errorf("statement \"%s\" is not allowed outside of function\n", tokens[0])
 	}
-	
+
 	switch tokens[0] {
 	case "fn":
 		return g.WriteStFunction(tokens)
@@ -364,7 +364,7 @@ func (g *Generator) WriteLnStPrint(tokens []string, newline bool) error {
 
 	g.sb.WriteString(fmt.Sprintf(
 		"<output expression=\"%s\" newline=\"%s\"/>",
-		strings.ReplaceAll(strings.Join(tokens[1:], " &amp; "), "\"", "&quot;"),
+		strings.ReplaceAll(strings.Join(tokens[1:], " "), "\"", "&quot;"),
 		newlineStringify,
 	))
 	return nil

@@ -7,7 +7,7 @@ fn Main () _ None
 	println "Write a number:"
 	scan n
 	
-	println "Fibonacci:" Fibonacci(n)
+	println "Fibonacci: " & Fibonacci(n)
 end
 
 fn Fibonacci (n Integer) x Integer
