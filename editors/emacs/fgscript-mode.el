@@ -6,22 +6,6 @@
   (let ((indent-level (fgscript-calculate-indentation)))
     (indent-line-to (or indent-level 0))))
 
-(defun fgscript-indent-region (start end)
-  "Indent all lines in the region from START to END."
-  (interactive "r")
-  (save-excursion
-    (goto-char start)
-    (while (< (point) end)
-      (fgscript-indent-line)
-      (forward-line 1))))
-
-(defun fgscript-indent-region-or-line ()
-  "Indent the region if selected, otherwise indent the current line."
-  (interactive)
-  (if (use-region-p)
-      (fgscript-indent-region (region-beginning) (region-end))
-    (fgscript-indent-line)))
-
 (defun fgscript-calculate-indentation ()
   "Calculate the appropriate indentation level."
   (save-excursion
@@ -75,7 +59,7 @@
 
   (setq fgscript-indent-offset 2)
 
-  (define-key fgscript-mode-map (kbd "TAB") 'fgscript-indent-region-or-line)
+  (define-key fgscript-mode-map (kbd "TAB") 'fgscript-indent-line)
   (define-key fgscript-mode-map (kbd "RET") 'fgscript-newline-and-indent)
 
   (modify-syntax-entry ?# "<" fgscript-mode-syntax-table)
