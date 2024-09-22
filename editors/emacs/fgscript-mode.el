@@ -46,7 +46,7 @@
   "Major mode for editing FGScript files."
   (setq font-lock-defaults
         '((
-           ("\\<\\(fn\\|if\\|else\\|while\\|do\\|for\\|backward\\|from\\|to\\|step\\|end\\|var\\|set\\|call\\|print\\|println\\|scan\\)\\>" . font-lock-keyword-face)
+           ("\\<\\(fn\\|if\\|else\\|while\\|do\\|for\\|backward\\|from\\|to\\|step\\|end\\|var\\|set\\|call\\|print\\|println\\|scan\\|breakpoint\\)\\>" . font-lock-keyword-face)
            ("\\<\\(Integer\\|Real\\|Boolean\\|String\\|None\\)\\>" . font-lock-type-face)
            ("\\[\\(Integer\\|Real\\|Boolean\\|String\\)\\]" . font-lock-type-face)
            ("\\(==\\|!=\\|>=\\|<=\\|>\\|<\\|\\+\\|-\\|\\*\\|/\\|%\\|&&\\|||\\|!\\|&\\|^\\)" . font-lock-operator-face)

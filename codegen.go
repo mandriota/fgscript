@@ -75,6 +75,13 @@ func Tokenize(src string) []string {
 	return tokens
 }
 
+func stringifyBool(b bool) string {
+	if b {
+		return "True"
+	}
+	return "False"
+}
+
 type Generator struct {
 	sb strings.Builder
 
@@ -136,6 +143,8 @@ func (g *Generator) MatchAndWrite(tokens []string) error {
 		return g.WriteLnStScan(tokens)
 	case "#":
 		return g.WriteComment(tokens)
+	case "breakpoint":
+		return g.WriteBreakpoint(tokens)
 	default:
 		return fmt.Errorf("unknown command \"%s\"", tokens[0])
 	}
@@ -357,15 +366,10 @@ func (g *Generator) WriteLnStPrint(tokens []string, newline bool) error {
 		return fmt.Errorf("\"%s\" expects at least 1 argument (found %d)", tokens[0], len(tokens)-1)
 	}
 
-	newlineStringify := "False"
-	if newline {
-		newlineStringify = "True"
-	}
-
 	g.sb.WriteString(fmt.Sprintf(
 		"<output expression=\"%s\" newline=\"%s\"/>",
 		strings.ReplaceAll(strings.Join(tokens[1:], " "), "\"", "&quot;"),
-		newlineStringify,
+		stringifyBool(newline),
 	))
 	return nil
 }
@@ -391,6 +395,15 @@ func (g *Generator) WriteComment(tokens []string) error {
 	g.sb.WriteString(fmt.Sprintf(
 		"<comment text=\"%s\"/>",
 		strings.Join(tokens[1:], " "),
+	))
+	return nil
+}
+
+func (g *Generator) WriteBreakpoint(tokens []string) error {
+	g.sb.WriteString(fmt.Sprintf(
+		"<breakpoint expression=\"%s\" always=\"%s\"/>",
+		strings.Join(tokens[1:], " "),
+		stringifyBool(len(tokens) == 1),
 	))
 	return nil
 }
