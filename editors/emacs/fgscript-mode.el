@@ -1,5 +1,47 @@
 (require 'font-lock)
 
+(defun fgscript-indent-line ()
+  "Indent current line as FGScript code."
+  (interactive)
+  (let ((indent-level (fgscript-calculate-indentation)))
+    (indent-line-to (or indent-level 0))))
+
+(defun fgscript-calculate-indentation ()
+  "Calculate the appropriate indentation level."
+  (save-excursion
+    (beginning-of-line)
+    (cond
+     ((looking-at "^[ \t]*end") (fgscript-previous-indentation-dedent))
+     ((looking-at "^[ \t]*\\(fn\\|if\\|else\\|while\\|for\\|do\\)") (fgscript-previous-indentation))
+     ((fgscript-previous-line-is-block-start) (+ (fgscript-previous-indentation) fgscript-indent-offset))
+     ((looking-at "^[ \t]*\\(var\\|set\\|print\\|println\\|scan\\|#\\)") (fgscript-previous-indentation))
+     (t (fgscript-previous-indentation)))))
+
+(defun fgscript-previous-line-is-block-start ()
+  "Check if the previous line starts a block."
+  (save-excursion
+    (forward-line -1)
+    (beginning-of-line)
+    (looking-at "^[ \t]*\\(fn\\|if\\|else\\|while\\|for\\|do\\)")))
+
+(defun fgscript-previous-indentation ()
+  "Get the indentation level of the previous non-blank line."
+  (save-excursion
+    (forward-line -1)
+    (while (and (not (bobp)) (looking-at "^[ \t]*$"))
+      (forward-line -1))
+    (current-indentation)))
+
+(defun fgscript-previous-indentation-dedent ()
+  "Get the indentation level of the previous non-blank line and decrease it."
+  (max 0 (- (fgscript-previous-indentation) fgscript-indent-offset)))
+
+(defun fgscript-newline-and-indent ()
+  "Insert a newline and indent the new line."
+  (interactive)
+  (newline)
+  (fgscript-indent-line))
+
 (define-derived-mode fgscript-mode prog-mode "FGScript"
   "Major mode for editing FGScript files."
   (setq font-lock-defaults
@@ -17,49 +59,7 @@
 
   (setq fgscript-indent-offset 2)
 
-  (defun fgscript-indent-line ()
-    "Indent current line as FGScript code."
-    (interactive)
-    (let ((indent-level (fgscript-calculate-indentation)))
-      (indent-line-to (or indent-level 0))))
-
-  (defun fgscript-calculate-indentation ()
-    "Calculate the appropriate indentation level."
-    (save-excursion
-      (beginning-of-line)
-      (cond
-       ((looking-at "^[ \t]*end") (fgscript-previous-indentation-dedent))
-       ((looking-at "^[ \t]*\\(fn\\|if\\|else\\|while\\|for\\|do\\)") (fgscript-previous-indentation))
-       ((fgscript-previous-line-is-block-start) (+ (fgscript-previous-indentation) fgscript-indent-offset))
-       ((looking-at "^[ \t]*\\(var\\|set\\|print\\|println\\|scan\\|#\\)") (fgscript-previous-indentation))
-       (t (fgscript-previous-indentation)))))
-
-  (defun fgscript-previous-line-is-block-start ()
-    "Check if the previous line starts a block."
-    (save-excursion
-      (forward-line -1)
-      (beginning-of-line)
-      (looking-at "^[ \t]*\\(fn\\|if\\|else\\|while\\|for\\|do\\)")))
-
-  (defun fgscript-previous-indentation ()
-    "Get the indentation level of the previous non-blank line."
-    (save-excursion
-      (forward-line -1)
-      (while (and (not (bobp)) (looking-at "^[ \t]*$"))
-        (forward-line -1))
-      (current-indentation)))
-
-  (defun fgscript-previous-indentation-dedent ()
-    "Get the indentation level of the previous non-blank line and decrease it."
-    (max 0 (- (fgscript-previous-indentation) fgscript-indent-offset)))
-
   (define-key fgscript-mode-map (kbd "TAB") 'fgscript-indent-line)
-
-  (defun fgscript-newline-and-indent ()
-    "Insert a newline and indent the new line."
-    (interactive)
-    (newline)
-    (fgscript-indent-line))
 
   (define-key fgscript-mode-map (kbd "RET") 'fgscript-newline-and-indent)
 
