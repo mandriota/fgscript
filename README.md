@@ -1,7 +1,8 @@
 # FGScript
 A macro system for Flowgorithm internal file format.
 
-*NOTE*:
+**NOTE**:
+
 The fgscript macro system itself was written completely by me.
 However, AI was partially used for writing fgscript-mode, which provides basic indentation and syntax highlighting for fgscript for GNU/Emacs (you can read the corresponding notice in [`./emacs/README.org`](./emacs/README.org)).
 
