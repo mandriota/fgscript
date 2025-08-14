@@ -1,0 +1,8 @@
+#+TITLE: fgscript-mode
+#+AUTHOR: Mark Mandriota
+
+Provides basic syntax hightlight and indentation for fgscript.
+
+*NOTE*:
+Partially AI was used for writing this major mode.
+Not everything is authored by me; nevertheless, everything was supervised and, if necessary, modified by me.
